@@ -1,101 +1,136 @@
-import Image from "next/image";
+import ActionButton from '@/components/actionButton/page';
+import Tile from '@/components/tile/page';
+import Swimlane from '@/components/swimlane/page';
+import Footer from '@/components/footer/page';
+import NavBar from '@/components/navBar/page';
+import Image from 'next/image';
+import type { Metadata } from 'next';
+import type { Image as SanityImageSource } from 'sanity';
+import { sanityClient } from '@/lib/sanity.client';
+import { homePageQuery } from '@/lib/sanity.queries';
+import { urlFor } from '@/lib/sanity.image';
+import { getLanguage, type Language } from '@/lib/language';
+import SectionHeading from '@/components/sectionHeading/page';
+import PartnerStrip from '@/components/partnerStrip/page';
+import TestimonialSlider from '@/components/testimonialSlider/page';
+import ContactCta from '@/components/contactCta/page';
 
-export default function Home() {
+export const metadata: Metadata = {
+  title: 'Home',
+  description: 'Diverko partners with sales teams for consultancy, training, and motorsport-inspired coaching.',
+};
+
+type HomePagePayload = {
+  hero?: {
+    title?: string;
+    highlight?: string;
+    tagline?: string;
+    backgroundImage?: SanityImageSource;
+    primaryCta?: { label?: string; href?: string };
+    secondaryCta?: { label?: string; href?: string };
+  };
+  missionsHeading?: string;
+  missions?: {
+    _id: string;
+    title?: string;
+    summary?: string;
+    href?: string;
+    imageUrl?: string;
+  }[];
+  contactTitle?: string;
+  contactBody?: string;
+  partnerLogos?: { _key: string; name?: string; logo?: SanityImageSource }[];
+  testimonials?: {
+    _id: string;
+    name?: string;
+    role?: string;
+    quote?: string;
+    avatar?: SanityImageSource;
+  }[];
+};
+
+async function getHomePage(lang: Language) {
+  try {
+    return await sanityClient.fetch<HomePagePayload>(homePageQuery, { slug: "home", lang });
+  } catch (error) {
+    console.warn("Failed to fetch home page content from Sanity", error);
+    return null;
+  }
+}
+
+/* const FALLBACK_COPY: Record<Language, { heroTitle: string; heroTagline: string; missionsHeading: string; contactTitle: string; contactBody: string; missions: { title: string; summary: string; href: string }[] }> = {
+ *  ...local fallback copy commented out temporarily to verify Sanity content
+ * };
+ */
+
+export default async function App() {
+  const lang = await getLanguage();
+  const data = await getHomePage(lang);
+  const hero = data?.hero;
+  const heroTitle = hero?.title ?? "";
+  const heroTagline = hero?.tagline ?? "";
+  const primaryCta = hero?.primaryCta;
+  const secondaryCta = hero?.secondaryCta;
+  const heroImage = hero?.backgroundImage ? urlFor(hero.backgroundImage).width(1600).url() : '/banner.jpg';
+  const missionsHeading = data?.missionsHeading ?? "";
+  const fallbackImages = ['/training.jpg', '/support.jpg', '/strategic.jpg', '/team-management.jpg'];
+  const missions =
+    data?.missions && data.missions.length > 0
+      ? data.missions
+      : [];
+  const contactBody = data?.contactBody ?? "";
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className='text-primary_light'>
+      <NavBar/>
+      {/* Hero element */}
+      <div className="w-svw h-screen">
+        <div className='bg-primary_dark bg-opacity-60 h-[calc(100%-74px)] lg:h-[calc(100%-56px)]'>
+          <Image
+            src={heroImage}
+            alt="banner image"
+            fill={true}
+            className='w-svw h-svw absolute -z-10 object-cover'
+          />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          <div className='px-6 h-full flex flex-col justify-end pb-8 md:pb-16 lg:pb-32 md:max-w-3xl lg:max-w-2xl lg:ml-[calc(1/9*100%)]'>
+            <h1 className='font-bold text-4xl md:text-5xl leading-tight'>{heroTitle}</h1>
+            <p className='text-lg md:text-xl pt-6 font-medium'>{heroTagline}</p>
+            <div className='flex flex-wrap justify-start gap-4 pt-8'>
+              <ActionButton title={primaryCta?.label ?? 'Ready, Set, Go'} href={primaryCta?.href ?? ''}/>
+              <ActionButton title={secondaryCta?.label ?? 'Let\'s race'} href={secondaryCta?.href ?? ''}/>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+      {/* Missions Overview */}
+      <div className="w-svw text-primary_dark bg-primary_light">
+        <div className='max-w-4xl mx-auto flex justify-center px-6 pt-20 pb-10 text-center'>
+          <SectionHeading title={missionsHeading || "Our missions"} subtitle={contactBody} />
+        </div>
+        <div className='flex justify-center px-0 pb-24'>
+          <Swimlane className="max-w-6xl">
+            {missions.map((mission, index) => (
+              <Tile
+                key={mission._id}
+                src={mission.image ?? fallbackImages[index % fallbackImages.length]}
+                title={mission.title ?? ""}
+                content={mission.summary ?? ""}
+                href={mission.href ?? "/missions"}
+              />
+            ))}
+          </Swimlane>
+        </div>
+      </div>
+      <PartnerStrip partners={data?.partnerLogos ?? []} />
+      <TestimonialSlider testimonials={data?.testimonials ?? []} />
+      <ContactCta
+        title="Ready to plan your next mission?"
+        subtitle="Contact"
+        ctaLabel="Schedule a call"
+        ctaHref="/contact"
+      />
+      <Footer/>
     </div>
   );
 }

@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Diverko 2.0
 
-## Getting Started
+Modernised Diverko marketing site built with the Next.js App Router, Tailwind CSS, and a fully localised Sanity CMS backend.
 
-First, run the development server:
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The Sanity Studio is colocated under `app/(studio)` – start it with:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run studio
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses the Next.js i18n router (`en`, `nl`, `fr`). Every route is available at `/[locale]/…` and the locale is synced with the `LanguageSwitcher` component.
 
-## Learn More
+## Environment
 
-To learn more about Next.js, take a look at the following resources:
+Create `.env.local` from `.env.local.example` and provide the following keys:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Key | Description |
+| --- | --- |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Sanity project ID |
+| `NEXT_PUBLIC_SANITY_DATASET` | Dataset name |
+| `SANITY_API_VERSION` | (optional) API version |
+| `SANITY_READ_TOKEN` | Token for preview mode |
+| `SANITY_PREVIEW_SECRET` | Secret string used by `/api/preview` |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Content model & editorial workflow
 
-## Deploy on Vercel
+All copy, media, and navigation is stored in Sanity. Editors can follow these steps:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Site settings** – update email, phone, address, description, and social links in *Site Settings*.
+2. **Navigation menu** – manage primary and dropdown links under *Navigation Menu*. Labels are localised (`localeString` fields).
+3. **Hero sections** – create hero documents with background images (hotspot-enabled) and CTA references.
+4. **Missions** – each mission includes translations, categories (`missions`, `consultancy`, `training`), and an image.
+5. **Home page** – reference the hero, pick featured missions, add contact copy, partner logos, and featured testimonials.
+6. **General pages** – used for About, Contact, Missions, Training, Consultancy, and Motorcycles; optional extras include tags, stats, team members, benefits, program sections, and testimonial references.
+7. **Legal pages** – create a general page and set `pageCategory` to `legal` to have it appear automatically in the footer.
+8. **Testimonials & Team** – standalone documents referenced by pages and the home testimonial slider.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Required fields now include validation rules inside the schema, ensuring editorial mistakes are caught before publishing.
+
+### Media management
+
+All hero, mission, and testimonial images live in Sanity image fields with hotspots enabled. Upload assets through Studio and reuse them anywhere; `urlFor` automatically generates optimised URLs via the Sanity CDN. Local fallbacks remain only as a safety net.
+
+## Preview mode
+
+Enable previewing unpublished content by hitting:
+
+```
+/api/preview?secret=YOUR_SECRET&redirect=/en/about
+```
+
+Exit preview with `/api/preview/exit`. The `SANITY_PREVIEW_SECRET` and `SANITY_READ_TOKEN` env vars must be configured.
+
+## Contact form
+
+`/api/contact` accepts `POST` requests (`name`, `email`, `message`). Replace the placeholder console log with your preferred email/CRM integration before going live.
+
+## Testing & linting
+
+```
+npm run lint
+```
+
+## Deployment checklist
+
+1. Populate Sanity (use `sanity/seed/*.ndjson` as a starting point).
+2. Configure env variables for both Next.js and Studio.
+3. Provide the preview secret/token to trusted editors.
+4. Upload partner logos and mission imagery via Studio so the homepage tiles render from the CDN.
